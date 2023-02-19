@@ -5,6 +5,7 @@ import argparse
 
 #TODO: Implement a client that connects to your server to chat with other clients here
 
+lock = threading.Lock()
 # Use sys.stdout.flush() after print statemtents
 def parseCLA():
 	parser = argparse.ArgumentParser()
@@ -30,13 +31,16 @@ def receivingMes(socket):
 	return text.strip()
 
 def printToClient(socket):
-	while True:
+	try:
 		while True:
-			text = socket.recv(100).decode()
-			if len(text) >= 100:
-				break
-		print (text.strip())
-		sys.stdout.flush()
+			while True:
+				text = socket.recv(100).decode()
+				if len(text) >= 100:
+					break
+			print (text.strip())
+			sys.stdout.flush()
+	except:
+		return
 
 
 def client_program(host, port, username, passcode):
@@ -56,9 +60,10 @@ def client_program(host, port, username, passcode):
 		text = input()  # take input
 		sendMessage(client_socket, text)
 		if (text == 'Exit'):
+			client_socket.close()
 			break
 
-	client_socket.close()  # close the connection
+	#client_socket.close()   close the connection
 
 
 if __name__ == '__main__':
