@@ -51,6 +51,7 @@ def client_program(host, port, username, passcode):
 	sendMessage(client_socket, login)
 	response = receivingMes(client_socket)
 	print (response)
+	sys.stdout.flush()
 	if (response == "Incorrect passcode"):
 		client_socket.close()
 		return
