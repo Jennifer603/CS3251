@@ -48,7 +48,8 @@ def client_program(host, port, username, passcode):
 	client_socket = socket.socket()  # instantiate
 	client_socket.connect((host, port))  # connect to the server
 	login = username + " " + passcode #construct username and passcode
-	response = sendMessage(client_socket, login)
+	sendMessage(client_socket, login)
+	response = receivingMes(client_socket)
 	print (response)
 	if (response == "Incorrect passcode"):
 		client_socket.close()

@@ -2,7 +2,7 @@ import socket
 import threading
 import sys 
 import argparse
-
+import datetime
 
 #TODO: Implement all code for your server here
 
@@ -39,65 +39,77 @@ def start_server(portNum):
 	host = socket.gethostname()
 	server_socket = socket.socket()
 	server_socket.bind((host, portNum))
-	print("Server started on " + str(portNum) + ". Accepting Connections")
+	print("Server started on port " + str(portNum) + ". Accepting Connections")
 	sys.stdout.flush()
 	return server_socket, host
 
+def send_to_all(text, conn):
+	text = text.ljust(100, " ")
+	for client in clientList:
+		if (client != conn):
+			client.sendall(text.encode())
+
+def constructText(username, text):
+	header = username + ": "
+	now = datetime.datetime.now()
+	if (text == ":)"):
+		header += "[feeling happy]"
+	elif (text == ":("):
+		header += "[feeling sad]"
+	elif (text == ":mytime"):
+		#%a - abbreviated weekday, %A - full weekday, %m - full month, %b - abbreviated month
+		formatedTime = now.strftime("%a %b %d %H:%M:%S %Y")
+		header += str(formatedTime)
+	elif (text == ":+1hr"):
+		newTime = now + datetime.timedelta(hours=1)
+		#%a - abbreviated weekday, %A - full weekday, %m - full month, %b - abbreviated month
+		formatedNewTime = newTime.strftime("%a %b %d %H:%M:%S %Y")
+		header += formatedNewTime
+	else:
+		header += text
+	return header.ljust(100, " ")
 def each_client(passcode, hostName, port, conn):
+	#checking login
 	login = receivingMes(conn)
-	#print (str(conn) + " and "+ str(address))
 	userInfo = login.split(" ")
-	print(userInfo[0] + " and " + userInfo[1])
-	sys.stdout.flush()
 	if (passcode != userInfo[1]):
-		print ("hello?")
-		sys.stdout.flush()
 		loginResponse = "Incorrect passcode"
 		loginResponse = loginResponse.ljust(100, " ")
 		conn.sendall(loginResponse.encode())
 		conn.close()
 		return
 	else:
-		print ("hiii")
-		sys.stdout.flush()
 		loginResponse = "Connected to " + hostName + " on port " + str(port)
 		loginResponse = loginResponse.ljust(100, " ")
 		conn.sendall(loginResponse.encode())
 
+	#if login correct
+	userName = userInfo[0]
 	lock.acquire()
 	clientList.append(conn)
+	welcome = userName + " joined the chatroom"
+	send_to_all(welcome, conn)
 	lock.release()
-	userName = userInfo[0]
+	print(welcome)
+	sys.stdout.flush()
+
+	
 	while True:
-        # receive data stream. it won't accept data packet greater than 1024 bytes
-		while True:
-			data = conn.recv(100).decode()
-			if (len(data) >= 100):
-				break
-		if not data:
-            # if data is not received break
-			
-			break
-		data = data.strip()
+        # receive data stream. it won't accept data packet greater than 100 bytes (100 chars)
+		data = receivingMes(conn)
 		if data == 'Exit':
 			conn.close()
-			endMessage = userName + " has left the chat"
+			endMessage = userName + " has left the chatroom"
 			endMessage = endMessage.ljust(100, " ")
 			lock.acquire()
-			for client in clientList:
-				if (client != conn):
-					client.sendall(endMessage.encode())
+			send_to_all(endMessage, conn)
 			clientList.remove(conn)
 			lock.release()
 			break
 
-		constText = "from " + userName + "(user): " + data
-		constText = constText.ljust(100, " ")
-		sys.stdout.flush()
+		constText = constructText(userName, data)
 		lock.acquire()
-		for client in clientList:
-			if (client != conn):
-				client.sendall(constText.encode())
+		send_to_all(constText, conn)
 		lock.release()
 		
 
