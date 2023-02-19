@@ -9,6 +9,17 @@ import argparse
 
 # Use sys.stdout.flush() after print statemtents
 
+#Global Client list
+clientList = []
+lock = threading.Lock()
+
+def receivingMes(socket):
+	while True:
+		text = socket.recv(100).decode()
+		if len(text) >= 100:
+			break
+	return text.strip()
+
 #Parse Command Line Arguments
 def parseCLA():
 	parser = argparse.ArgumentParser()
@@ -29,39 +40,76 @@ def start_server(portNum):
 	server_socket = socket.socket()
 	server_socket.bind((host, portNum))
 	print("Server started on " + str(portNum) + ". Accepting Connections")
+	sys.stdout.flush()
 	return server_socket, host
 
-
-
-def server_program(server_socket, passcode, hostName, port):
-    # configure how many clients the server can listen simultaneously
-	server_socket.listen()
-	conn, address = server_socket.accept()  # accept new connection
-	login = conn.recv(1024).decode()
+def each_client(passcode, hostName, port, conn):
+	login = receivingMes(conn)
 	#print (str(conn) + " and "+ str(address))
 	userInfo = login.split(" ")
+	print(userInfo[0] + " and " + userInfo[1])
+	sys.stdout.flush()
 	if (passcode != userInfo[1]):
+		print ("hello?")
+		sys.stdout.flush()
 		loginResponse = "Incorrect passcode"
-		conn.send(loginResponse.encode())
+		loginResponse = loginResponse.ljust(100, " ")
+		conn.sendall(loginResponse.encode())
+		conn.close()
+		return
 	else:
+		print ("hiii")
+		sys.stdout.flush()
 		loginResponse = "Connected to " + hostName + " on port " + str(port)
-		conn.send(loginResponse.encode())
+		loginResponse = loginResponse.ljust(100, " ")
+		conn.sendall(loginResponse.encode())
 
+	lock.acquire()
+	clientList.append(conn)
+	lock.release()
 	userName = userInfo[0]
-	
-	
 	while True:
         # receive data stream. it won't accept data packet greater than 1024 bytes
-		data = conn.recv(1024).decode()
+		while True:
+			data = conn.recv(100).decode()
+			if (len(data) >= 100):
+				break
 		if not data:
             # if data is not received break
 			
 			break
-		
-		print("from " + userName + "(user): " + data)
+		data = data.strip()
+		if data == 'Exit':
+			conn.close()
+			endMessage = userName + " has left the chat"
+			endMessage = endMessage.ljust(100, " ")
+			lock.acquire()
+			for client in clientList:
+				if (client != conn):
+					client.sendall(endMessage.encode())
+			clientList.remove(conn)
+			lock.release()
+			break
+
+		constText = "from " + userName + "(user): " + data
+		constText = constText.ljust(100, " ")
 		sys.stdout.flush()
-		data = input(' -> ')
-		conn.send(data.encode())  # send data to the client
+		lock.acquire()
+		for client in clientList:
+			if (client != conn):
+				client.sendall(constText.encode())
+		lock.release()
+		
+
+
+def server_program(server_socket, passcode, hostName, port):
+    # configure how many clients the server can listen simultaneously
+	while True:
+		server_socket.listen()
+		conn, address = server_socket.accept()  # accept new connection
+		t = threading.Thread(target=each_client, args=(passcode, hostName, port, conn))
+		t.start()
+	
 
 if __name__ == "__main__":
 	port, passcode = parseCLA()

@@ -2,7 +2,6 @@ import socket
 import threading
 import sys 
 import argparse
-import random
 
 #TODO: Implement a client that connects to your server to chat with other clients here
 
@@ -16,31 +15,47 @@ def parseCLA():
 	args = parser.parse_args()
 	return args.host, args.port, args.username, args.passcode
 
+def paddingString(text):
+	return text.ljust(100, " ").encode()
+
+def sendMessage(socket, text):
+	socket.sendall(paddingString(text))
+
+
+def receivingMes(socket):
+	while True:
+		text = socket.recv(100).decode()
+		if len(text) >= 100:
+			break
+	return text.strip()
+
+def printToClient(socket):
+	while True:
+		while True:
+			text = socket.recv(100).decode()
+			if len(text) >= 100:
+				break
+		print (text.strip())
+		sys.stdout.flush()
+
 
 def client_program(host, port, username, passcode):
 	
 	client_socket = socket.socket()  # instantiate
-	print(socket.gethostname())
 	client_socket.connect((host, port))  # connect to the server
 	login = username + " " + passcode #construct username and passcode
-	client_socket.send(login.encode())
-	response = client_socket.recv(1024).decode()
+	response = sendMessage(client_socket, login)
 	print (response)
 	if (response == "Incorrect passcode"):
 		client_socket.close()
 		return
 
-	text = input(" -> ")
-
+	t = threading.Thread(target=printToClient, args=[client_socket])
+	t.start()
 	while True:
-		client_socket.send(text.encode())  # send message
-		response = client_socket.recv(1024).decode()  # receive response
-
-		print('Received from server: ' + response)  # show in terminal
-		sys.stdout.flush()
-		text = input(" -> ")  # take input
-		if (text.lower().strip() == 'exit'):
-			client_socket.send(text.encode())
+		text = input()  # take input
+		sendMessage(client_socket, text)
+		if (text == 'Exit'):
 			break
 
 	client_socket.close()  # close the connection
