@@ -22,9 +22,10 @@ def receivingMes(socket):
 
 #Parse Command Line Arguments
 def parseCLA():
-	parser = argparse.ArgumentParser()
-	parser.add_argument('port',type=int)
-	parser.add_argument('passcode') #if no type specified, it is a string
+	parser = argparse.ArgumentParser(description='Start the server')
+	parser.add_argument('-start', action='store_true', help='Start the server')
+	parser.add_argument('-port',type=int, required=True, help='Port number for the server')
+	parser.add_argument('-passcode', required=True, help='Passcode for the server') #if no type specified, it is a string
 	args = parser.parse_args()
 	return args.port, args.passcode
 
@@ -39,7 +40,7 @@ def start_server(portNum):
 	host = socket.gethostname()
 	server_socket = socket.socket()
 	server_socket.bind((host, portNum))
-	print("Server started on port " + str(portNum) + ". Accepting Connections")
+	print("Server started on port " + str(portNum) + ". Accepting connections")
 	sys.stdout.flush()
 	return server_socket, host
 

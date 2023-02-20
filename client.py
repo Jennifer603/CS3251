@@ -9,10 +9,12 @@ lock = threading.Lock()
 # Use sys.stdout.flush() after print statemtents
 def parseCLA():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('host')
-	parser.add_argument('port',type=int)
-	parser.add_argument('username')
-	parser.add_argument('passcode')
+	parser.add_argument('-join', action='store_true', help='join the server')
+	parser.add_argument('-host', required=True, help='host name of the client')
+	parser.add_argument('-port', type=int, required=True, help='port number to join')
+	parser.add_argument('-username', required=True, help='username of the client')
+	parser.add_argument('-passcode', required=True, help='Passcode for the server') #if no type specified, it is a string
+	
 	args = parser.parse_args()
 	return args.host, args.port, args.username, args.passcode
 
