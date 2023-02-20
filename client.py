@@ -63,7 +63,7 @@ def client_program(host, port, username, passcode):
 	while True:
 		text = input()  # take input
 		sendMessage(client_socket, text)
-		if (text == 'Exit'):
+		if (text == ':Exit'):
 			client_socket.close()
 			break
 
