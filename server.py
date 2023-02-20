@@ -68,6 +68,8 @@ def constructText(username, text):
 		header += formatedNewTime
 	else:
 		header += text
+	print (header)
+	sys.stdout.flush()
 	return header.ljust(100, " ")
 def each_client(passcode, hostName, port, conn):
 	#checking login
