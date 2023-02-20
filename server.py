@@ -37,7 +37,7 @@ def check_passcode(passcode):
 
 def start_server(portNum):
 	#Get local host name
-	host = socket.gethostname()
+	host = '127.0.0.1'
 	server_socket = socket.socket()
 	server_socket.bind((host, portNum))
 	print("Server started on port " + str(portNum) + ". Accepting connections")
@@ -100,9 +100,9 @@ def each_client(passcode, hostName, port, conn):
 	while True:
         # receive data stream. it won't accept data packet greater than 100 bytes (100 chars)
 		data = receivingMes(conn)
-		if data == 'Exit':
+		if data == ':Exit':
 			conn.close()
-			endMessage = userName + " has left the chatroom"
+			endMessage = userName + " left the chatroom"
 			endMessage = endMessage.ljust(100, " ")
 			lock.acquire()
 			send_to_all(endMessage, conn)
@@ -132,4 +132,4 @@ if __name__ == "__main__":
 		print ("Invalid Argument")
 		exit()
 	socket, hostName = start_server(port)
-	server_program(socket, passcode,hostName, port)
+	server_program(socket, passcode, hostName, port)
