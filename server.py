@@ -37,9 +37,11 @@ def check_passcode(passcode):
 
 def start_server(portNum):
 	#Get local host name
-	host = socket.gethostname()
+	
+	host = socket.gethostbyaddr('127.0.0.1')[0]
+	#host = socket.gethostname()
 	server_socket = socket.socket()
-	server_socket.bind((host, portNum))
+	server_socket.bind(('', portNum))
 	print("Server started on port " + str(portNum) + ". Accepting connections")
 	sys.stdout.flush()
 	return server_socket, host
@@ -80,7 +82,8 @@ def each_client(passcode, hostName, port, conn):
 		conn.close()
 		return
 	else:
-		loginResponse = "Connected to " + hostName + " on port " + str(port)
+		#loginResponse = "Connected to " + hostName + " on port " + str(port)
+		loginResponse = "Connected to " + "127.0.0.1" + " on port " + str(port)
 		loginResponse = loginResponse.ljust(100, " ")
 		conn.sendall(loginResponse.encode())
 
@@ -98,9 +101,9 @@ def each_client(passcode, hostName, port, conn):
 	while True:
         # receive data stream. it won't accept data packet greater than 100 bytes (100 chars)
 		data = receivingMes(conn)
-		if data == 'Exit':
+		if data == ':Exit':
 			conn.close()
-			endMessage = userName + " has left the chatroom"
+			endMessage = userName + " left the chatroom"
 			endMessage = endMessage.ljust(100, " ")
 			lock.acquire()
 			send_to_all(endMessage, conn)
